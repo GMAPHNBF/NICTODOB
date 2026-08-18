@@ -1,0 +1,317 @@
+<!DOCTYPE html>
+<html lang="si">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sri Lankan NIC Decoder & Converter</title>
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        body {
+            background: linear-gradient(135deg, #0f172a, #1e1b4b, #311042);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+            color: #f8fafc;
+        }
+
+        .container {
+            background: rgba(255, 255, 255, 0.05);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 24px;
+            padding: 35px;
+            width: 100%;
+            max-width: 500px;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.4);
+        }
+
+        h2 {
+            text-align: center;
+            margin-bottom: 8px;
+            font-weight: 700;
+            background: linear-gradient(to right, #38bdf8, #818cf8);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        p.subtitle {
+            text-align: center;
+            font-size: 0.85rem;
+            color: #94a3b8;
+            margin-bottom: 25px;
+        }
+
+        .input-group {
+            position: relative;
+            margin-bottom: 20px;
+        }
+
+        input {
+            width: 100%;
+            padding: 16px 20px;
+            background: rgba(15, 23, 42, 0.6);
+            border: 2px solid rgba(255, 255, 255, 0.1);
+            border-radius: 14px;
+            color: #fff;
+            font-size: 1.1rem;
+            outline: none;
+            letter-spacing: 1px;
+            transition: all 0.3s ease;
+        }
+
+        input:focus {
+            border-color: #6366f1;
+            box-shadow: 0 0 15px rgba(99, 102, 241, 0.3);
+        }
+
+        button {
+            width: 100%;
+            padding: 16px;
+            background: linear-gradient(135deg, #4f46e5, #7c3aed);
+            border: none;
+            border-radius: 14px;
+            color: white;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 10px 20px rgba(124, 58, 237, 0.3);
+        }
+
+        button:hover {
+            opacity: 0.95;
+            transform: translateY(-2px);
+        }
+
+        .error {
+            color: #f87171;
+            font-size: 0.85rem;
+            margin-top: 8px;
+            display: none;
+            text-align: center;
+        }
+
+        .result-card {
+            margin-top: 25px;
+            background: rgba(15, 23, 42, 0.4);
+            border-radius: 16px;
+            padding: 20px;
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            display: none;
+        }
+
+        .info-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 10px 0;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+        }
+
+        .info-row:last-child {
+            border-bottom: none;
+        }
+
+        .label {
+            color: #94a3b8;
+            font-size: 0.9rem;
+        }
+
+        .value {
+            font-weight: 600;
+            color: #f1f5f9;
+            font-size: 0.95rem;
+            text-align: right;
+        }
+
+        .badge {
+            background: rgba(56, 189, 248, 0.2);
+            color: #38bdf8;
+            padding: 4px 10px;
+            border-radius: 20px;
+            font-size: 0.8rem;
+        }
+
+        .highlight-value {
+            color: #38bdf8;
+            font-size: 1.05rem;
+            letter-spacing: 0.5px;
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h2>NIC Info & Converter</h2>
+    <p class="subtitle">Enter Sri Lankan New or Old NIC Number</p>
+
+    <div class="input-group">
+        <input type="text" id="nicInput" placeholder="e.g. 952341234V or 199523401234" maxlength="12">
+        <div id="errorMsg" class="error">කරුණාකර නිවැරදි ජාතික හැඳුනුම්පත් අංකයක් ඇතුළත් කරන්න.</div>
+    </div>
+
+    <button onclick="decodeNIC()">විස්තර ලබාගන්න</button>
+
+    <div id="resultCard" class="result-card">
+        <div class="info-row">
+            <span class="label">හැඳුනුම්පත් වර්ගය (Type)</span>
+            <span id="nicFormat" class="value badge">-</span>
+        </div>
+        <div class="info-row">
+            <span class="label">අනෙක් NIC අංකය (Converted)</span>
+            <span id="convertedNic" class="value highlight-value">-</span>
+        </div>
+        <div class="info-row">
+            <span class="label">උපන් දිනය (DOB)</span>
+            <span id="dob" class="value">-</span>
+        </div>
+        <div class="info-row">
+            <span class="label">උපන් දිනය පැවති දිනය</span>
+            <span id="dayOfWeek" class="value">-</span>
+        </div>
+        <div class="info-row">
+            <span class="label">ස්ත්‍රී / පුරුෂ භාවය (Gender)</span>
+            <span id="gender" class="value">-</span>
+        </div>
+        <div class="info-row">
+            <span class="label">සම්පූර්ණ වයස (Age)</span>
+            <span id="age" class="value">-</span>
+        </div>
+        <div class="info-row">
+            <span class="label">අධික අවුරුද්දක්ද? (Leap Year)</span>
+            <span id="leapYear" class="value">-</span>
+        </div>
+        <div class="info-row">
+            <span class="label">ඡන්ද බලපත්‍ර තත්ත්වය</span>
+            <span id="voter" class="value">-</span>
+        </div>
+    </div>
+</div>
+
+<script>
+function isLeapYear(year) {
+    return (year % 4 === 0 && year % 100 !== 0) || (year % 400 === 0);
+}
+
+function decodeNIC() {
+    const input = document.getElementById('nicInput').value.trim().toUpperCase();
+    const errorMsg = document.getElementById('errorMsg');
+    const resultCard = document.getElementById('resultCard');
+
+    let year, days, gender, format, voterStatus = "සුදුසුකම් ලබයි";
+    let convertedNic = "ලබාගත නොහැක";
+
+    // Validate Old NIC (9 Digits + V/X)
+    if (/^\d{9}[VX]$/.test(input)) {
+        format = "පැරණි ක්‍රමය (Old Format)";
+        year = parseInt("19" + input.substring(0, 2));
+        days = parseInt(input.substring(2, 5));
+        if (input.endsWith('X')) voterStatus = "ඡන්ද බලපත්‍ර හිමිකම නැත (X)";
+
+        // Correct Old to New Logic: "19" + [First 5 digits] + "0" + [Last 4 digits]
+        const first5 = input.substring(0, 5);
+        const last4 = input.substring(5, 9);
+        convertedNic = "19" + first5 + "0" + last4;
+    } 
+    // Validate New NIC (12 Digits)
+    else if (/^\d{12}$/.test(input)) {
+        format = "නව ක්‍රමය (New Format)";
+        year = parseInt(input.substring(0, 4));
+        days = parseInt(input.substring(4, 7));
+
+        // Correct New to Old Logic (Only for 19xx years): [Digits 3-7] + [Digits 9-12] + "V"
+        if (year < 2000) {
+            const firstPart = input.substring(2, 7);
+            const secondPart = input.substring(8, 12);
+            convertedNic = firstPart + secondPart + "V";
+        } else {
+            convertedNic = "අදාළ නොවේ (2000 න් පසු උපන්)";
+        }
+    } 
+    else {
+        errorMsg.style.display = 'block';
+        resultCard.style.display = 'none';
+        return;
+    }
+
+    errorMsg.style.display = 'none';
+
+    // Gender Check
+    if (days > 500) {
+        gender = "ස්ත්‍රී (Female)";
+        days -= 500;
+    } else {
+        gender = "පුරුෂ (Male)";
+    }
+
+    // Days validation
+    if (days < 1 || days > 366) {
+        errorMsg.textContent = "ඇතුළත් කළ හැඳුනුම්පත් අංකය අසම්පූර්ණයි/වැරදියි.";
+        errorMsg.style.display = 'block';
+        resultCard.style.display = 'none';
+        return;
+    }
+
+    // Map NIC Days to Exact Month & Date
+    const monthDays = [31, 29, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31];
+    let month = 0;
+    let date = days;
+
+    for (let i = 0; i < monthDays.length; i++) {
+        if (date <= monthDays[i]) {
+            month = i;
+            break;
+        }
+        date -= monthDays[i];
+    }
+
+    // Birth Date Object
+    const dob = new Date(year, month, date);
+    const leapYearStatus = isLeapYear(year) ? "ඔව් (Leap Year)" : "නැත (Normal Year)";
+
+    // Calculate Age
+    const today = new Date();
+    let yearsOld = today.getFullYear() - dob.getFullYear();
+    let monthsOld = today.getMonth() - dob.getMonth();
+    let daysOld = today.getDate() - dob.getDate();
+
+    if (daysOld < 0) {
+        monthsOld--;
+        const prevMonthDays = new Date(today.getFullYear(), today.getMonth(), 0).getDate();
+        daysOld += prevMonthDays;
+    }
+    if (monthsOld < 0) {
+        yearsOld--;
+        monthsOld += 12;
+    }
+
+    const daysOfWeekList = ["ඉරිදා", "සඳුදා", "අඟහරුවාදා", "බදාදා", "බ්‍රහස්පතින්දා", "සිකුරාදා", "සෙනසුරාදා"];
+    const dayName = daysOfWeekList[dob.getDay()];
+
+    const formattedDOB = `${dob.getFullYear()}-${String(dob.getMonth() + 1).padStart(2, '0')}-${String(dob.getDate()).padStart(2, '0')}`;
+
+    // Render Results
+    document.getElementById('nicFormat').textContent = format;
+    document.getElementById('convertedNic').textContent = convertedNic;
+    document.getElementById('dob').textContent = formattedDOB;
+    document.getElementById('dayOfWeek').textContent = dayName;
+    document.getElementById('gender').textContent = gender;
+    document.getElementById('age').textContent = `${yearsOld} අවුරුදු, මාස ${monthsOld}, දින ${daysOld}`;
+    document.getElementById('leapYear').textContent = leapYearStatus;
+    document.getElementById('voter').textContent = voterStatus;
+
+    resultCard.style.display = 'block';
+}
+</script>
+
+</body>
+</html>
